@@ -24,6 +24,8 @@ check_compiler();  check_OS();  check_architecture();       // human-readable st
   `get_total_virtual_memory()`, `get_total_inodes()` / `get_free_inodes()`,
   `get_total_disk_size()` / `get_free_disk_size()`, plus `get_current_ram()` /
   `get_total_virtual_used()` on Apple.
+- **`examples/usage.cc`** — a self-checking, `ctest`-wired example that mirrors
+  Xapiand's metrics/resource probes.
 
 Each probe reads the real machine (`/proc`, `sysctl`, `statvfs`, `getrlimit`, ...) and
 is `__APPLE__` / `__linux__` / BSD aware.
@@ -41,7 +43,7 @@ macros' arguments, so a host only needs it if it opts into real logging via
 
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
-ctest --test-dir build     # asserts plausible, self-consistent probe results
+ctest --test-dir build     # runs the unit test and the self-checking usage example
 ```
 
 ## Use (FetchContent)

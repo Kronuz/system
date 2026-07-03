@@ -17,6 +17,7 @@ memory_stats.h / memory_stats.cc RAM / virtual-memory / disk / inode probes.
 system_trace.h                   No-op L_* logging defaults (redirect via SYSTEM_TRACE_HEADER).
 likely.h                         Vendored likely()/unlikely().
 test/test.cc                     ctest: asserts plausible, self-consistent probe results.
+examples/usage.cc                ctest-wired example mirroring Xapiand's metrics/resource probes.
 ```
 
 ## Dependencies (Kronuz family, via FetchContent at tip)

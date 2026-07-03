@@ -38,4 +38,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_executable(system_test test/test.cc)
 	target_link_libraries(system_test PRIVATE system)
 	add_test(NAME system COMMAND system_test)
+
+	# A realistic usage example mirroring Xapiand's /:metrics and resource-limit
+	# probes. It self-checks and is ALSO registered as a ctest regression test.
+	add_executable(system_usage examples/usage.cc)
+	target_link_libraries(system_usage PRIVATE system)
+	add_test(NAME system_usage COMMAND system_usage)
 endif()
