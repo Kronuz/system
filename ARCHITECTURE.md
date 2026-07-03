@@ -4,6 +4,11 @@
 resource state. No state, no caching -- every call re-queries the machine. The only
 subtlety is per-platform source selection.
 
+![system: each probe reads its data from a per-platform source](assets/architecture.svg)
+
+<!-- Diagram: assets/architecture.svg. Edit the D2 source below and re-render with:
+     d2 --theme 0 --pad 20 <this-source>.d2 assets/architecture.svg
+
 ```d2
 # system: each probe reads its data from a per-platform source.
 direction: down
@@ -14,6 +19,7 @@ seam: "SYSTEM_TRACE_HEADER\n(L_* + error::; no-op default)" { style.fill: "#faf3
 api -> linux.proc; api -> linux.sv; api -> apple.sysctl; api -> apple.mach
 api -> seam: "on probe error" { style.stroke-dash: 3 }
 ```
+-->
 
 ## Dependencies
 
