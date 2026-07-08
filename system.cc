@@ -32,6 +32,7 @@
 #endif
 
 #include <array>                    // for std::array
+#include <cstring>                  // for strchr
 #include <errno.h>                  // for errno
 #include <fcntl.h>                  // for O_CREAT, O_RDONLY, O_WRONLY
 #include <poll.h>                   // for poll, pollfd, POLLNVAL
