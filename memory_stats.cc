@@ -30,6 +30,10 @@
 #  endif
 #endif
 
+#include <utility>                  // for std::pair / std::make_pair (used on every platform;
+                                    // only the Linux branch below pulls a C++ header transitively,
+                                    // so FreeBSD's trimmed libc++ needs this explicitly)
+
 #include <errno.h>                  // for errno
 #include <sys/param.h>              // for statfs
 #include <sys/mount.h>              // for statfs
