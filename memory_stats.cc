@@ -48,7 +48,8 @@
 #include <mach/mach.h>              // for task_basic_info
 #elif defined(__FreeBSD__)
 #include <fcntl.h>
-#include <unistd.h>                 // for getpagesize
+#include <sys/user.h>               // for kinfo_proc
+#include <unistd.h>                 // for getpagesize, getpid
 #elif defined(__linux__)
 #include <unistd.h>
 #include <ios>
@@ -202,6 +203,15 @@ uint64_t get_current_memory_by_process(bool resident)
 	} else {
 		current_memory_by_process = vsize;
 	}
+#elif defined(__FreeBSD__)
+	struct kinfo_proc info{};
+	size_t info_len = sizeof(info);
+	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+	if (sysctl(mib, 4, &info, &info_len, nullptr, 0) < 0) {
+		L_ERR("ERROR: Unable to get process memory: sysctl(kern.proc.pid): {} ({}): {}", error::name(errno), errno, error::description(errno));
+		return 0;
+	}
+	current_memory_by_process = resident ? static_cast<uint64_t>(info.ki_rssize) * getpagesize() : static_cast<uint64_t>(info.ki_size);
 #else
 	L_WARNING_ONCE("WARNING: No way of getting total {} memory size by the process.", resident ? "resident" : "virtual");
 #endif
@@ -258,7 +268,7 @@ uint64_t get_total_virtual_memory()
 uint64_t get_total_inodes()
 {
 	uint64_t total_inodes = 0;
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 	struct statfs statf;
 	if (statfs(".", &statf) < 0) {
 		L_ERR("ERROR: Unable to get total inodes statfs(): {} ({}): {}", error::name(errno), errno, error::description(errno));
@@ -282,7 +292,7 @@ uint64_t get_total_inodes()
 uint64_t get_free_inodes()
 {
 	uint64_t free_inodes = 0;
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 	struct statfs statf;
 	if (statfs(".", &statf) < 0) {
 		L_ERR("ERROR: Unable to get free inodes statfs(): {} ({}): {}", error::name(errno), errno, error::description(errno));
@@ -306,7 +316,7 @@ uint64_t get_free_inodes()
 uint64_t get_total_disk_size()
 {
 	uint64_t total_disk_size = 0;
-#if defined(__APPLE__)|| defined(__linux__)
+#if defined(__APPLE__) || defined(__linux__) || defined(__FreeBSD__)
 	struct statfs statf;
 	if (statfs(".", &statf) < 0) {
 		L_ERR("ERROR: Unable to get total disk size (): {} ({}): {}", error::name(errno), errno, error::description(errno));
@@ -322,7 +332,7 @@ uint64_t get_total_disk_size()
 uint64_t get_free_disk_size()
 {
 	uint64_t free_disk_size = 0;
-#if defined(__APPLE__)|| defined(__linux__)
+#if defined(__APPLE__) || defined(__linux__) || defined(__FreeBSD__)
 	struct statfs statf;
 	if (statfs(".", &statf) < 0) {
 		L_ERR("ERROR: Unable to get free disk size (): {} ({}): {}", error::name(errno), errno, error::description(errno));

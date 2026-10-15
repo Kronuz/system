@@ -163,28 +163,20 @@ std::size_t get_open_files_system_wide()
 {
 	std::size_t open_files_system_wide = 0;
 
-#ifdef SYSTEM_HAVE_SYS_SYSCTL_H
-#if defined(KERN_OPENFILES)
-#define _SYSCTL_NAME "kern.openfiles"  // FreeBSD
-	int mib[] = {CTL_KERN, KERN_OPENFILES};
-	std::size_t mib_len = sizeof(mib) / sizeof(int);
-#elif defined(__APPLE__)
-#define _SYSCTL_NAME "kern.num_files"  // Apple
-	int mib[CTL_MAXNAME + 2];
-	std::size_t mib_len = sizeof(mib) / sizeof(int);
-	if (sysctlnametomib(_SYSCTL_NAME, mib, &mib_len) < 0) {
-		L_ERR("ERROR: sysctl(" _SYSCTL_NAME "): {} ({}): {}", error::name(errno), errno, error::description(errno));
+#if defined(__FreeBSD__) || defined(__APPLE__)
+	// An int on both; read by name, since the numeric names differ between them.
+	int value = 0;
+	auto value_len = sizeof(value);
+#if defined(__APPLE__)
+	constexpr const char* name = "kern.num_files";
+#else
+	constexpr const char* name = "kern.openfiles";
+#endif
+	if (sysctlbyname(name, &value, &value_len, nullptr, 0) < 0) {
+		L_ERR("ERROR: sysctl({}): {} ({}): {}", name, error::name(errno), errno, error::description(errno));
 		return 0;
 	}
-#endif
-#endif
-#ifdef _SYSCTL_NAME
-	auto open_files_system_wide_len = sizeof(open_files_system_wide);
-	if (sysctl(mib, mib_len, &open_files_system_wide, &open_files_system_wide_len, nullptr, 0) < 0) {
-		L_ERR("ERROR: Unable to get number of open files: sysctl(" _SYSCTL_NAME "): {} ({}): {}", error::name(errno), errno, error::description(errno));
-		return 0;
-	}
-#undef _SYSCTL_NAME
+	open_files_system_wide = static_cast<std::size_t>(value);
 #elif defined(__linux__)
 	int fd = io::open("/proc/sys/fs/file-nr", O_RDONLY);
 	if unlikely(fd == -1) {
@@ -210,28 +202,15 @@ std::size_t get_max_files_system_wide()
 {
 	std::size_t max_files_system_wide = 0;
 
-#ifdef SYSTEM_HAVE_SYS_SYSCTL_H
-#if defined(KERN_OPENFILES)
-#define _SYSCTL_NAME "kern.maxfiles"  // FreeBSD
-	int mib[] = {CTL_KERN, KERN_OPENFILES};
-	std::size_t mib_len = sizeof(mib) / sizeof(int);
-#elif defined(__APPLE__)
-#define _SYSCTL_NAME "kern.maxfiles"  // Apple
-	int mib[CTL_MAXNAME + 2];
-	std::size_t mib_len = sizeof(mib) / sizeof(int);
-	if (sysctlnametomib(_SYSCTL_NAME, mib, &mib_len) < 0) {
-		L_ERR("ERROR: sysctl(" _SYSCTL_NAME "): {} ({}): {}", error::name(errno), errno, error::description(errno));
+#if defined(__FreeBSD__) || defined(__APPLE__)
+	// An int on both; read by name, since the numeric names differ between them.
+	int value = 0;
+	auto value_len = sizeof(value);
+	if (sysctlbyname("kern.maxfiles", &value, &value_len, nullptr, 0) < 0) {
+		L_ERR("ERROR: sysctl(kern.maxfiles): {} ({}): {}", error::name(errno), errno, error::description(errno));
 		return 0;
 	}
-#endif
-#endif
-#ifdef _SYSCTL_NAME
-	auto max_files_system_wide_len = sizeof(max_files_system_wide);
-	if (sysctl(mib, mib_len, &max_files_system_wide, &max_files_system_wide_len, nullptr, 0) < 0) {
-		L_ERR("ERROR: Unable to get number of open files: sysctl(" _SYSCTL_NAME "): {} ({}): {}", error::name(errno), errno, error::description(errno));
-		return 0;
-	}
-#undef _SYSCTL_NAME
+	max_files_system_wide = static_cast<std::size_t>(value);
 #elif defined(__linux__)
 	int fd = io::open("/proc/sys/fs/file-nr", O_RDONLY);
 	if unlikely(fd == -1) {
