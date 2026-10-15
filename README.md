@@ -1,5 +1,7 @@
 # system
 
+[![CI](https://github.com/Kronuz/system/actions/workflows/ci.yml/badge.svg)](https://github.com/Kronuz/system/actions/workflows/ci.yml)
+
 Process- and machine-level resource introspection extracted from
 [Xapiand](https://github.com/Kronuz/Xapiand): file-descriptor counts, RAM / virtual
 memory, disk and inode capacity, and compiler / OS / architecture strings.
