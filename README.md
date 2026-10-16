@@ -1,57 +1,85 @@
 # system
 
 [![CI](https://github.com/Kronuz/system/actions/workflows/ci.yml/badge.svg)](https://github.com/Kronuz/system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
-Process- and machine-level resource introspection extracted from
-[Xapiand](https://github.com/Kronuz/Xapiand): file-descriptor counts, RAM / virtual
-memory, disk and inode capacity, and compiler / OS / architecture strings.
+How much is left? File descriptors, RAM, disk, and inodes for the current process
+and machine, in C++20, plus the compiler, OS, and architecture it runs on. One call
+per number, on Linux, macOS, and FreeBSD.
 
-```cpp
-#include "system.hh"
-#include "memory_stats.h"
+![system: probes read /proc, sysctl, statfs, and getrlimit](assets/architecture.svg)
 
-get_open_files_per_proc();   get_max_files_per_proc();      // fd usage vs the rlimit
-get_total_ram();             get_current_memory_by_process(); // bytes
-get_total_disk_size();       get_free_disk_size();          // bytes
-get_total_inodes();          get_free_inodes();
-check_compiler();  check_OS();  check_architecture();       // human-readable strings
+## ✨ Highlights
+
+- 📂 **File descriptors**: open and maximum, per process and system-wide.
+- 🧠 **Memory**: total RAM, process resident or virtual size, total virtual memory.
+- 💽 **Disk**: total and free bytes and inodes of the filesystem holding the
+  current directory.
+- 🏷️ **Identification**: `check_compiler()`, `check_OS()`, `check_architecture()`.
+- 🧩 **Portable**: feature detection with `__has_include`, no generated `config.h`;
+  logging is an optional seam (`SYSTEM_TRACE_HEADER`).
+
+## 📦 Installation
+
+Requires a C++20 compiler and CMake 3.14 or newer. It brings
+[io](https://github.com/Kronuz/io) and [strings](https://github.com/Kronuz/strings).
+CI builds it on Linux (x86_64, arm64), macOS (arm64, x86_64), and FreeBSD, plus ASan,
+UBSan, and TSan builds.
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(system
+  GIT_REPOSITORY https://github.com/Kronuz/system.git
+  GIT_TAG        main)
+FetchContent_MakeAvailable(system)
+
+target_link_libraries(my_app PRIVATE system::system)
 ```
 
-## What's in it
+## 🚀 Quick start
 
-- **`system.hh`** — `get_{open,max}_files_per_proc()`, `get_{open,max}_files_system_wide()`
-  (the fd rlimit and current usage), and `check_compiler()` / `check_OS()` /
-  `check_architecture()` (build/runtime identification strings).
-- **`memory_stats.h`** — `get_total_ram()`, `get_current_memory_by_process(resident)`,
-  `get_total_virtual_memory()`, `get_total_inodes()` / `get_free_inodes()`,
-  `get_total_disk_size()` / `get_free_disk_size()`, plus `get_current_ram()` /
-  `get_total_virtual_used()` on Apple.
-- **`examples/usage.cc`** — a self-checking, `ctest`-wired example that mirrors
-  Xapiand's metrics/resource probes.
+```cpp
+#include "memory_stats.h"
+#include "system.hh"
 
-Each probe reads the real machine (`/proc`, `sysctl`, `statvfs`, `getrlimit`, ...) and
-is `__APPLE__` / `__linux__` / BSD aware.
+#include <cstdio>
 
-## Standalone, portable
+int main() {
+	std::printf("fds   %zu / %zu\n", get_open_files_per_proc(), get_max_files_per_proc());
+	std::printf("rss   %llu of %llu bytes\n",
+		(unsigned long long)get_current_memory_by_process(), (unsigned long long)get_total_ram());
+	std::printf("disk  %llu free\n", (unsigned long long)get_free_disk_size());
+	std::printf("%s on %s (%s)\n", check_compiler().c_str(), check_OS().c_str(), check_architecture().c_str());
+}
+```
 
-Feature detection is portable (`__has_include(<sys/sysctl.h>)` instead of a generated
-`config.h`). Dependencies are minimal: **io** (EINTR-safe `/proc` reads) and **strings**
-(`format`). Logging is an **optional** seam: the `L_*` family is no-op by default
-(`system_trace.h`), and the `error::` helper it would log appears only inside those
-macros' arguments, so a host only needs it if it opts into real logging via
-`SYSTEM_TRACE_HEADER`.
+`examples/usage.cc` is a self-checking version that runs under `ctest`.
 
-## Build / test
+## 🎯 When to use it
+
+- ✅ Health endpoints, startup banners, and resource limits checks.
+- ❌ Per-thread or cgroup-aware accounting: these are process- and machine-wide
+  numbers.
+
+## 📚 Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md): where each number comes from on each platform.
+- [AGENTS.md](AGENTS.md): repository map and invariants.
+
+## 🛠️ Building and testing
 
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
-ctest --test-dir build     # runs the unit test and the self-checking usage example
+ctest --test-dir build
 ```
 
-## Use (FetchContent)
+## 🤝 Contributing
 
-```cmake
-FetchContent_Declare(system GIT_REPOSITORY https://github.com/Kronuz/system.git GIT_TAG main)
-FetchContent_MakeAvailable(system)
-target_link_libraries(your_app PRIVATE system::system)
-```
+Issues and pull requests are welcome. Read [AGENTS.md](AGENTS.md) first. CI must
+pass on every platform.
+
+## 📄 License
+
+MIT, Copyright (c) 2015-2019 Dubalu LLC. See [LICENSE](LICENSE). Extracted from
+[Xapiand](https://github.com/Kronuz/Xapiand).
