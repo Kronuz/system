@@ -43,6 +43,30 @@ errno-names is pulled in only when a host opts into real logging via `SYSTEM_TRA
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build && ctest --test-dir build
 ```
 
+## Verification and benchmarks
+
+The method shared by the Kronuz libraries is in
+[docs/PERFORMANCE.md](https://github.com/Kronuz/cpp-libraries/blob/main/docs/PERFORMANCE.md).
+
+- **Tests.** The command above runs `system` (`test/test.cc`) and `system_usage`
+  (`examples/usage.cc`). The probes read the real machine, so there is no exact oracle: the tests
+  assert plausible, self-consistent results (positive totals, free at most total, non-empty
+  compiler, OS and architecture strings).
+- **CI and sanitizers.** CI (`.github/workflows/ci.yml`, which calls the shared
+  [cmake.yml](https://github.com/Kronuz/cpp-libraries/blob/main/.github/workflows/cmake.yml))
+  runs both on Linux x86-64 and arm64, macOS arm64 and x86-64, and FreeBSD, and in an ASan+UBSan
+  build and a TSan build with clang on Linux. The ASan+UBSan job is:
+
+  ```sh
+  CC=clang CXX=clang++ cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -D_GLIBCXX_ASSERTIONS" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+  cmake --build build-asan && ASAN_OPTIONS=detect_leaks=1 ctest --test-dir build-asan --output-on-failure
+  ```
+
+- **Not here.** The repository has no benchmark target, differential test, fuzz target or
+  mutation script.
+
 ## Host integration (how Xapiand uses it)
 
 Xapiand compiles `system.cc` + `memory_stats.cc` into its own object list with
