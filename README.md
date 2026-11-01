@@ -6,38 +6,23 @@ Part of [Kronuz C++ Libraries](https://github.com/Kronuz/cpp-libraries), a colle
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
-How much is left? File descriptors, RAM, disk, and inodes for the current process
-and machine, in C++20, plus the compiler, OS, and architecture it runs on. One call
-per number, on Linux, macOS, and FreeBSD.
-
-![system: probes read /proc, sysctl, statfs, and getrlimit](assets/architecture.svg)
+Process and machine introspection for C++20: open files, memory, disk space, and inodes,
+one call per number, on Linux, macOS, and FreeBSD. Each function asks the platform's own
+source (`/proc` and `statvfs` on Linux, `sysctl` and Mach calls on macOS and BSD) on
+every call, with no state or caching. Reach for it for health endpoints, startup banners,
+and resource-limit checks.
 
 ## ✨ Highlights
 
-- 📂 **File descriptors**: open and maximum, per process and system-wide.
-- 🧠 **Memory**: total RAM, process resident or virtual size, total virtual memory.
-- 💽 **Disk**: total and free bytes and inodes of the filesystem holding the
-  current directory.
-- 🏷️ **Identification**: `check_compiler()`, `check_OS()`, `check_architecture()`.
-- 🧩 **Portable**: feature detection with `__has_include`, no generated `config.h`;
-  logging is an optional seam (`SYSTEM_TRACE_HEADER`).
-
-## 📦 Installation
-
-Requires a C++20 compiler and CMake 3.14 or newer. It brings
-[io](https://github.com/Kronuz/io) and [strings](https://github.com/Kronuz/strings).
-CI builds it on Linux (x86_64, arm64), macOS (arm64, x86_64), and FreeBSD, plus ASan,
-UBSan, and TSan builds.
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(system
-  GIT_REPOSITORY https://github.com/Kronuz/system.git
-  GIT_TAG        main)
-FetchContent_MakeAvailable(system)
-
-target_link_libraries(my_app PRIVATE system::system)
-```
+- **File descriptors.** Open and maximum, per process and system-wide.
+- **Memory.** Total RAM, the process's resident or virtual size, and total virtual
+  memory.
+- **Disk.** Total and free bytes and inodes of the filesystem that holds the current
+  directory.
+- **Identification.** `check_compiler()`, `check_OS()`, and `check_architecture()`
+  return printable strings.
+- **No generated configuration.** Platform features are detected with `__has_include`;
+  logging is an optional header seam (`SYSTEM_TRACE_HEADER`) that defaults to no-ops.
 
 ## 🚀 Quick start
 
@@ -54,34 +39,69 @@ int main() {
 	std::printf("disk  %llu free\n", (unsigned long long)get_free_disk_size());
 	std::printf("%s on %s (%s)\n", check_compiler().c_str(), check_OS().c_str(), check_architecture().c_str());
 }
+// prints, for example:
+// fds   3 / 10240
+// rss   1540096 of 17179869184 bytes
+// disk  36772392960 free
+// Clang v17.0.0 on macOS (aarch64)
 ```
 
-`examples/usage.cc` is a self-checking version that runs under `ctest`.
+[`examples/usage.cc`](examples/usage.cc) is a self-checking version that runs under
+`ctest`.
+
+## 📦 Installation
+
+Requires a C++20 compiler and CMake 3.16 or newer. It brings
+[io](https://github.com/Kronuz/io) and [strings](https://github.com/Kronuz/strings)
+through FetchContent and builds one static library. CI builds and tests it with GCC and
+Clang on Linux (x86_64, arm64), macOS (arm64, x86_64), and FreeBSD, plus ASan, UBSan,
+and TSan builds.
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(system
+  GIT_REPOSITORY https://github.com/Kronuz/system.git
+  GIT_TAG        e329a47f29ec859f40369481b8f1a69175027c98)  # or main, which tracks the tip
+FetchContent_MakeAvailable(system)
+
+target_link_libraries(my_app PRIVATE system::system)
+```
+
+Then `#include "system.hh"` for descriptors and identification, and
+`#include "memory_stats.h"` for memory, disk, and inodes.
 
 ## 🎯 When to use it
 
-- ✅ Health endpoints, startup banners, and resource limits checks.
-- ❌ Per-thread or cgroup-aware accounting: these are process- and machine-wide
-  numbers.
+Health endpoints, startup banners, and checks against resource limits, where one
+process- or machine-wide number per call is what you need.
+
+Not for:
+
+- **Per-thread or cgroup-aware accounting.** The numbers are process- and machine-wide.
+- **Hot paths.** Every call re-queries the operating system; nothing is cached.
+- **Windows.** The probes read `/proc`, `sysctl`, and POSIX `statvfs`.
 
 ## 📚 Documentation
 
-- [ARCHITECTURE.md](ARCHITECTURE.md): where each number comes from on each platform.
+- [ARCHITECTURE.md](ARCHITECTURE.md): where each number comes from on each platform,
+  and the logging seam.
 - [AGENTS.md](AGENTS.md): repository map and invariants.
+- [Catalog entry](https://github.com/Kronuz/cpp-libraries/blob/main/AGENTS.md#system).
 
 ## 🛠️ Building and testing
 
 ```sh
-cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
 ctest --test-dir build
 ```
 
 ## 🤝 Contributing
 
-Issues and pull requests are welcome. Read [AGENTS.md](AGENTS.md) first. CI must
-pass on every platform.
+Issues and pull requests are welcome. Read [AGENTS.md](AGENTS.md) first, and the
+[catalog's AGENTS.md](https://github.com/Kronuz/cpp-libraries/blob/main/AGENTS.md) for
+the family's rules. CI must pass on every platform.
 
 ## 📄 License
 
-MIT, Copyright (c) 2015-2019 Dubalu LLC. See [LICENSE](LICENSE). Extracted from
-[Xapiand](https://github.com/Kronuz/Xapiand).
+MIT; see [LICENSE](LICENSE). Extracted from [Xapiand](https://github.com/Kronuz/Xapiand).

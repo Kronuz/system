@@ -4,23 +4,6 @@
 resource state. No state, no caching -- every call re-queries the machine. The only
 subtlety is per-platform source selection.
 
-![system: each probe reads its data from a per-platform source](assets/architecture.svg)
-
-<!-- Diagram: assets/architecture.svg. Edit the D2 source below and re-render with:
-     d2 --theme 0 --pad 20 <this-source>.d2 assets/architecture.svg
-
-```d2
-# system: each probe reads its data from a per-platform source.
-direction: down
-api: "system / memory_stats API\n(fd counts, RAM, disk, inodes, compiler/OS/arch)" { style.fill: "#e8f5ee" }
-linux: "Linux" { style.fill: "#eef2f7"; proc: "/proc (via io::)"; sv: "statvfs / getrlimit" }
-apple: "macOS / BSD" { style.fill: "#eef2f7"; sysctl: "sysctl MIBs\n(__has_include<sys/sysctl.h>)"; mach: "Mach / statvfs" }
-seam: "SYSTEM_TRACE_HEADER\n(L_* + error::; no-op default)" { style.fill: "#faf3e6" }
-api -> linux.proc; api -> linux.sv; api -> apple.sysctl; api -> apple.mach
-api -> seam: "on probe error" { style.stroke-dash: 3 }
-```
--->
-
 ## Dependencies
 
 Kronuz libraries, fetched at tip: **`io`** (EINTR-safe `/proc` reads on Linux) and
