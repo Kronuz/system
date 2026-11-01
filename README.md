@@ -6,11 +6,11 @@ Part of [Kronuz C++ Libraries](https://github.com/Kronuz/cpp-libraries), a colle
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
-Process and machine introspection for C++20: open files, memory, disk space, and inodes,
-one call per number, on Linux, macOS, and FreeBSD. Each function asks the platform's own
-source (`/proc` and `statvfs` on Linux, `sysctl` and Mach calls on macOS and BSD) on
-every call, with no state or caching. Reach for it for health endpoints, startup banners,
-and resource-limit checks.
+Process and machine introspection for C++20: open files, memory, disk, and inodes on
+Linux, macOS, and FreeBSD. Each number is one function call, which asks the platform's
+own source (`/proc` and `statvfs` on Linux, `sysctl` and Mach calls on macOS and BSD)
+every time, with no state or caching. Reach for it for health endpoints, startup
+banners, and resource-limit checks.
 
 ## ✨ Highlights
 
