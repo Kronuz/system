@@ -21,8 +21,8 @@ endif()
 # --- Dependencies (the Kronuz family, tracked at tip) ---
 #   io      -> io::open/read/unchecked_fcntl (io.hh)   [system.cc, the proc/fd probes]
 #   strings -> strings::format               (strings.hh)
-FetchContent_Declare(io      GIT_REPOSITORY https://github.com/Kronuz/io.git      GIT_TAG 1336f85d00616187c633d372548aab3e4b843426)
-FetchContent_Declare(strings GIT_REPOSITORY https://github.com/Kronuz/strings.git GIT_TAG 485f882e7fc09775b7ae84930de14289aa9a4aa5)
+FetchContent_Declare(io      GIT_REPOSITORY https://github.com/Kronuz/io.git      GIT_TAG 93ddcaf3953e9e2abd0ea0615313fa1accb57c16)
+FetchContent_Declare(strings GIT_REPOSITORY https://github.com/Kronuz/strings.git GIT_TAG 09d4d1bfbd7dd475cc4c532338fd19beca19dcbe)
 FetchContent_MakeAvailable(io strings)
 
 # --- Library target ---
