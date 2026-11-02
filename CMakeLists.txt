@@ -22,7 +22,7 @@ endif()
 #   io      -> io::open/read/unchecked_fcntl (io.hh)   [system.cc, the proc/fd probes]
 #   strings -> strings::format               (strings.hh)
 FetchContent_Declare(io      GIT_REPOSITORY https://github.com/Kronuz/io.git      GIT_TAG 93ddcaf3953e9e2abd0ea0615313fa1accb57c16)
-FetchContent_Declare(strings GIT_REPOSITORY https://github.com/Kronuz/strings.git GIT_TAG 09d4d1bfbd7dd475cc4c532338fd19beca19dcbe)
+FetchContent_Declare(strings GIT_REPOSITORY https://github.com/Kronuz/strings.git GIT_TAG 4f7fd80cb449a0de1d231a44f262ec22a9b15a35)
 FetchContent_MakeAvailable(io strings)
 
 # --- Library target ---
