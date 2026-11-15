@@ -83,6 +83,8 @@ Not for:
 
 ## 📚 Documentation
 
+- [Asking the Machine](https://kronuz.github.io/blog/system/):
+  the Familiars post on why it exists and how it works.
 - [ARCHITECTURE.md](ARCHITECTURE.md): where each number comes from on each platform,
   and the logging seam.
 - [AGENTS.md](AGENTS.md): repository map and invariants.
