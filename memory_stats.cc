@@ -236,13 +236,13 @@ uint64_t get_total_virtual_memory()
 #endif
 #endif
 #ifdef _SYSCTL_NAME
-	int64_t total_pages;
+	u_int total_pages = 0;  // vm.stats.vm.v_page_count is a u_int
 	auto total_pages_len = sizeof(total_pages);
 	if (sysctl(mib, mib_len, &total_pages, &total_pages_len, nullptr, 0) < 0) {
 		L_ERR("ERROR: Unable to get total virtual memory size: sysctl(" _SYSCTL_NAME "): {} ({}): {}", error::name(errno), errno, error::description(errno));
 		return 0;
 	}
-	total_virtual_memory = total_pages * getpagesize();
+	total_virtual_memory = static_cast<uint64_t>(total_pages) * static_cast<uint64_t>(getpagesize());
 #undef _SYSCTL_NAME
 #elif defined(__APPLE__)
 	struct statfs stats;
