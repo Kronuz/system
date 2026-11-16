@@ -33,7 +33,9 @@
 #endif
 
 #include <array>                    // for std::array
+#include <cstdlib>                  // for std::strtol
 #include <cstring>                  // for strchr
+#include <dirent.h>                 // for opendir, readdir, closedir, dirfd
 #include <errno.h>                  // for errno
 #include <fcntl.h>                  // for O_CREAT, O_RDONLY, O_WRONLY
 #include <poll.h>                   // for poll, pollfd, POLLNVAL
@@ -126,10 +128,14 @@ std::size_t get_open_max_fd()
 }
 
 
-std::size_t get_open_files_per_proc()
+// Polls every descriptor up to the highest possible one: O(limit), so a last resort.
+static std::size_t count_open_files_by_poll()
 {
 	std::array<struct pollfd, OPEN_MAX> fds;
 	std::size_t open_max_fd = get_open_max_fd();
+#ifdef F_MAXFD
+	++open_max_fd;  // F_MAXFD is the highest open descriptor, a count needs one more slot
+#endif
 	off_t off = 0;
 	std::size_t cnt = 0;
 	while (open_max_fd) {
@@ -157,6 +163,46 @@ std::size_t get_open_files_per_proc()
 		off += OPEN_MAX;
 	}
 	return cnt;
+}
+
+
+#if defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
+// Counts the entries of the kernel's own descriptor directory: O(open descriptors).
+// Not on FreeBSD: /dev/fd lists only 0-2 without fdescfs. Returns 0 when it cannot list.
+static std::size_t count_open_files_by_listing()
+{
+#if defined(__linux__)
+	constexpr const char* path = "/proc/self/fd";
+#else
+	constexpr const char* path = "/dev/fd";
+#endif
+	DIR* dir = ::opendir(path);
+	if unlikely(dir == nullptr) {
+		return 0;
+	}
+	const int self = ::dirfd(dir);
+	std::size_t cnt = 0;
+	while (auto* entry = ::readdir(dir)) {
+		char* end = nullptr;
+		const long fd = std::strtol(entry->d_name, &end, 10);
+		if (end != entry->d_name && *end == '\0' && fd != self) {  // skips ".", ".." and the directory's own descriptor
+			++cnt;
+		}
+	}
+	::closedir(dir);
+	return cnt;
+}
+#endif
+
+
+std::size_t get_open_files_per_proc()
+{
+#if defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
+	if (auto cnt = count_open_files_by_listing()) {
+		return cnt;
+	}
+#endif
+	return count_open_files_by_poll();
 }
 
 
