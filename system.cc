@@ -206,6 +206,28 @@ std::size_t get_open_files_per_proc()
 }
 
 
+#if defined(__linux__)
+// Reads /proc/sys/fs/file-nr ("allocated\tfree\tmax") into `line`, NUL-terminated, and closes it.
+static bool read_file_nr(char (&line)[100])
+{
+	int fd = io::open("/proc/sys/fs/file-nr", O_RDONLY);
+	if unlikely(fd == -1) {
+		L_ERR("ERROR: Unable to open /proc/sys/fs/file-nr: {} ({}): {}", error::name(errno), errno, error::description(errno));
+		return false;
+	}
+	ssize_t n = io::read(fd, line, sizeof(line) - 1);
+	int saved = errno;
+	io::close(fd);
+	if unlikely(n == -1) {
+		L_ERR("ERROR: Unable to read from /proc/sys/fs/file-nr: {} ({}): {}", error::name(saved), saved, error::description(saved));
+		return false;
+	}
+	line[n] = '\0';
+	return true;
+}
+#endif
+
+
 std::size_t get_open_files_system_wide()
 {
 	std::size_t open_files_system_wide = 0;
@@ -225,15 +247,8 @@ std::size_t get_open_files_system_wide()
 	}
 	open_files_system_wide = static_cast<std::size_t>(value);
 #elif defined(__linux__)
-	int fd = io::open("/proc/sys/fs/file-nr", O_RDONLY);
-	if unlikely(fd == -1) {
-		L_ERR("ERROR: Unable to open /proc/sys/fs/file-nr: {} ({}): {}", error::name(errno), errno, error::description(errno));
-		return 0;
-	}
 	char line[100];
-	ssize_t n = io::read(fd, line, sizeof(line));
-	if unlikely(n == -1) {
-		L_ERR("ERROR: Unable to read from /proc/sys/fs/file-nr: {} ({}): {}", error::name(errno), errno, error::description(errno));
+	if (!read_file_nr(line)) {
 		return 0;
 	}
 	open_files_system_wide = atoi(line);
@@ -259,15 +274,8 @@ std::size_t get_max_files_system_wide()
 	}
 	max_files_system_wide = static_cast<std::size_t>(value);
 #elif defined(__linux__)
-	int fd = io::open("/proc/sys/fs/file-nr", O_RDONLY);
-	if unlikely(fd == -1) {
-		L_ERR("ERROR: Unable to open /proc/sys/fs/file-nr: {} ({}): {}", error::name(errno), errno, error::description(errno));
-		return 0;
-	}
 	char line[100];
-	ssize_t n = io::read(fd, line, sizeof(line));
-	if unlikely(n == -1) {
-		L_ERR("ERROR: Unable to read from /proc/sys/fs/file-nr: {} ({}): {}", error::name(errno), errno, error::description(errno));
+	if (!read_file_nr(line)) {
 		return 0;
 	}
 	char* field = line;

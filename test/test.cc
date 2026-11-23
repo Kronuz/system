@@ -63,13 +63,22 @@ static void test_open_files_count() {
 	}
 }
 
+// The system-wide readers leave no descriptor open (Linux reads them from /proc/sys/fs/file-nr).
+static void test_system_wide_readers_close() {
+	const std::size_t base = scan_open_files();
+	CHECK(get_open_files_system_wide() > 0);
+	CHECK(scan_open_files() == base);
+	CHECK(get_max_files_system_wide() > 0);
+	CHECK(scan_open_files() == base);
+}
+
 int main() {
 	// --- system.hh: file-descriptor + platform introspection ---
 	CHECK(get_max_files_per_proc() > 0);
 	CHECK(get_open_files_per_proc() >= 1);                       // at least stdin/out/err
 	CHECK(get_open_files_per_proc() <= get_max_files_per_proc());
 	test_open_files_count();
-	CHECK(get_max_files_system_wide() > 0);
+	test_system_wide_readers_close();
 	CHECK(!check_compiler().empty());
 	CHECK(!check_OS().empty());
 	CHECK(!check_architecture().empty());
